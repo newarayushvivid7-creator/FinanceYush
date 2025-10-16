@@ -1,0 +1,22 @@
+:root{--bg:#06070a;--panel:#0f1720;--muted:#9aa4b2;--accent:#7c5cff}
+*{box-sizing:border-box}
+html,body,#app{height:100%;margin:0;background:var(--bg);color:#e6eef6;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial}
+.app{max-width:980px;margin:0 auto;padding:12px}
+.header{display:flex;align-items:center;justify-content:space-between;padding:8px 4px}
+.logo{width:40px;height:40px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#5aa6ff);display:flex;align-items:center;justify-content:center;font-weight:700;color:white}
+.card{background:var(--panel);padding:12px;border-radius:12px;margin-bottom:12px}
+.input,select,textarea{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:rgba(255,255,255,0.02);color:inherit;margin-top:8px}
+.row{display:flex;gap:8px;align-items:center}
+.btn{cursor:pointer;padding:8px 12px;border-radius:8px;border:0;background:var(--accent);color:#fff;font-weight:600}
+.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+.table{width:100%;border-collapse:collapse;margin-top:8px}
+.table th,.table td{padding:8px;border-bottom:1px dashed rgba(255,255,255,0.03);text-align:left}
+.small{font-size:13px;color:var(--muted)}
+.footer{position:fixed;left:0;right:0;bottom:0;padding:10px;background:linear-gradient(180deg,rgba(5,7,10,0.95),rgba(3,5,7,0.98));display:flex;justify-content:space-around;z-index:999}
+.icon-btn{background:transparent;border:0;color:var(--muted);font-size:20px;padding:8px}
+.icon-btn.active{color:var(--accent)}
+.list{max-height:320px;overflow:auto}
+.tx-item{display:flex;justify-content:space-between;padding:8px;border-radius:8px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);margin-bottom:6px}
+.tx-left{max-width:70%}
+.tx-amount{font-weight:700}
+.tx-actions{display:flex;gap:4px}
