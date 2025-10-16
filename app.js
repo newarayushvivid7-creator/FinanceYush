@@ -1,8 +1,8 @@
-// YushFinance v3.6 Final - Fully Functional JS
+// YushFinance v3.7 Final - Fully Functional JS
 
 (function(){
 const app=document.getElementById('app');
-const STORAGE='yushfinance_v3_6_state';
+const STORAGE='yushfinance_v3_7_state';
 const RUPEE='रू';
 
 function uid(){return Math.random().toString(36).slice(2,9);}
@@ -37,7 +37,7 @@ return res;
 }
 
 function header(){return `<div class="header"><div style="display:flex;gap:12px;align-items:center">
-<div class="logo">Y</div><div><div style="font-weight:700">YushFinance</div><div class="small">v3.6 Final</div></div>
+<div class="logo">Y</div><div><div style="font-weight:700">YushFinance</div><div class="small">v3.7 Final</div></div>
 </div><div><button id="logoutBtn" class="btn ghost">Logout</button></div></div>`;}
 
 function footer(active){
@@ -53,7 +53,7 @@ return `<div class="footer">
 
 function viewLogin(){
 app.innerHTML=`<div class="app"><div class="card" style="max-width:540px;margin:40px auto">
-<h2>YushFinance v3.6</h2>
+<h2>YushFinance v3.7</h2>
 <div class="small">Login</div>
 <input id="email" class="input" placeholder="Email" />
 <input id="pwd" class="input" type="password" placeholder="Password" />
@@ -160,6 +160,7 @@ app.innerHTML=html;
 app.addEventListener('click', function(e){
 const btn = e.target.closest('.icon-btn');
 if(btn && btn.dataset.nav){ location.hash = btn.dataset.nav; return; }
+
 const editAcc = e.target.closest('[data-editacc]');
 if(editAcc){ 
   const id=editAcc.dataset.editacc;
@@ -168,18 +169,21 @@ if(editAcc){
   if(val!==null){ acc.opening=Number(val); save(state); render();}
   return;
 }
+
 const newAccBtn = e.target.closest('#newAccBtn');
 if(newAccBtn){
   const name=prompt('New Account Name',''); if(!name) return;
   const opening=Number(prompt('Opening balance','0')||0);
   state.accounts.push({id:uid(),name,opening}); save(state); render(); return;
 }
+
 const delTx = e.target.closest('[data-deltx]');
 if(delTx){
   const id=delTx.dataset.deltx;
   if(confirm('Delete this transaction?')){ state.transactions=state.transactions.filter(t=>t.id!==id); save(state); render(); }
   return;
 }
+
 const editTx = e.target.closest('[data-edittx]');
 if(editTx){
   const id=editTx.dataset.edittx;
@@ -188,29 +192,51 @@ if(editTx){
   if(val!==null){ tx.amount=Number(val); save(state); render(); }
   return;
 }
+
 const addTxBtn = e.target.closest('#addTxBtn');
 if(addTxBtn){
-  const desc=prompt('Description',''); if(!desc) return;
-  const amt=prompt('Amount','0'); if(!amt) return;
-  const cat=prompt('Category (Salary, Shopping, Rent, etc.)','Misc');
-  const note=prompt('Note (optional)','');
-  const accPrompt=prompt('Account (Cash, Bank, eSewa) leave blank for quick income/expense','Cash');
-  const accId=state.accounts.find(a=>a.name.toLowerCase()===accPrompt.toLowerCase())?.id || null;
-  state.transactions.push({id:uid(),date:nowISO(),desc,from:null,to:accId||null,
-amount:Number(amt),category:cat,note});
-save(state);
-render();
-return;
+  const desc = prompt('Description',''); 
+  if(!desc) return;
+
+  const amt = Number(prompt('Amount','0'));
+  if(!amt) return;
+
+  const category = prompt('Category (Salary, Shopping, Rent, Transfer, etc.)','Misc');
+  const note = prompt('Note (optional)','');
+
+  const fromPrompt = prompt('From account (leave blank if income)','');
+  const fromAcc = state.accounts.find(a=>a.name.toLowerCase()===fromPrompt.toLowerCase())?.id || null;
+
+  const toPrompt = prompt('To account (leave blank if expense)','');
+  const toAcc = state.accounts.find(a=>a.name.toLowerCase()===toPrompt.toLowerCase())?.id || null;
+
+  if(!fromAcc && !toAcc){
+    alert('Please select at least a From or To account'); 
+    return;
+  }
+
+  state.transactions.push({
+    id: uid(),
+    date: nowISO(),
+    desc,
+    from: fromAcc,
+    to: toAcc,
+    amount: amt,
+    category,
+    note
+  });
+
+  save(state);
+  render();
+  return;
 }
-});
 
 // Logout
-app.addEventListener('click', function(e){
-  const logoutBtn = e.target.closest('#logoutBtn');
-  if(logoutBtn){ location.hash=''; render(); }
+const logoutBtn = e.target.closest('#logoutBtn');
+if(logoutBtn){ location.hash=''; render(); return;}
 });
 
-// Render function
+// ----------------- Render -----------------
 function render(){
   const page = location.hash.replace('#','');
   if(!page) return viewLogin();
@@ -223,7 +249,6 @@ function render(){
   }
 }
 
-// Hash change listener
 window.addEventListener('hashchange', render);
 render();
 })();
