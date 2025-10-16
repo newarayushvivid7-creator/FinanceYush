@@ -1,14 +1,15 @@
-// YushFinance v3.4 Final - Fully Functional JS
+// YushFinance v3.5 Final - Fully Functional JS
 
 (function(){
 const app=document.getElementById('app');
-const STORAGE='yushfinance_v3_4_state';
+const STORAGE='yushfinance_v3_5_state';
 const RUPEE='रू';
 
 function uid(){return Math.random().toString(36).slice(2,9);}
 function nowISO(){return new Date().toISOString();}
 function fmt(n){return RUPEE+' '+Number(n||0).toLocaleString();}
 
+// Default demo data
 const demo={
 accounts:[
 {id:'a_cash',name:'Cash',opening:10000},
@@ -20,16 +21,17 @@ transactions:[
 ]
 };
 
+// Load/save localStorage
 function load(){try{return JSON.parse(localStorage.getItem(STORAGE))||null}catch(e){return null}}
 function save(s){localStorage.setItem(STORAGE,JSON.stringify(s));}
-
-let state=load()||demo;
+let state=load()||JSON.parse(JSON.stringify(demo));
 if(!state.accounts) state.accounts=demo.accounts;
 if(!state.transactions) state.transactions=demo.transactions;
 
+// Default user
 const USER={email:'admin@yush.com',password:'1234'};
 
-// ------------- Helpers ----------------
+// Helper to compute balances
 function balances(){
 const res={};
 state.accounts.forEach(a=>res[a.id]=Number(a.opening||0));
@@ -40,8 +42,9 @@ if(t.from) res[t.from]=(res[t.from]||0)-Number(t.amount||0);
 return res;
 }
 
+// Header & Footer
 function header(){return `<div class="header"><div style="display:flex;gap:12px;align-items:center">
-<div class="logo">Y</div><div><div style="font-weight:700">YushFinance</div><div class="small">v3.4 Final</div></div>
+<div class="logo">Y</div><div><div style="font-weight:700">YushFinance</div><div class="small">v3.5 Final</div></div>
 </div><div><button id="logoutBtn" class="btn ghost">Logout</button></div></div>`;}
 
 function footer(active){
@@ -53,16 +56,21 @@ return `<div class="footer">
 </div>`;
 }
 
+// Navigation init
 function initNav(){
-document.querySelectorAll('.icon-btn').forEach(b=>{b.onclick=()=>{const page=b.getAttribute('data-nav');location.hash=page;render();}});
+document.querySelectorAll('.icon-btn').forEach(b=>{
+b.onclick=()=>{ const page=b.getAttribute('data-nav'); if(page){ location.hash=page; } }
+});
 const logoutBtn=document.getElementById('logoutBtn');
-if(logoutBtn) logoutBtn.onclick=()=>{location.hash='';render();}
+if(logoutBtn) logoutBtn.onclick=()=>{ location.hash=''; render(); }
 }
 
-// ----------------- Views ----------------
+// ----------------- Views -----------------
+
+// Login Page
 function viewLogin(){
 app.innerHTML=`<div class="app"><div class="card" style="max-width:540px;margin:40px auto">
-<h2>YushFinance v3.4</h2>
+<h2>YushFinance v3.5</h2>
 <div class="small">Login</div>
 <input id="email" class="input" placeholder="Email" />
 <input id="pwd" class="input" type="password" placeholder="Password" />
@@ -82,7 +90,7 @@ else{document.getElementById('loginMsg').textContent='Invalid credentials';}
 document.getElementById('demoBtn').onclick=()=>{save(demo);state=JSON.parse(JSON.stringify(demo));location.hash='dashboard';render();}
 }
 
-// ----------------- Dashboard ----------------
+// Dashboard
 function viewDashboard(){
 const b=balances();
 const total=Object.values(b).reduce((s,v)=>s+v,0);
@@ -105,8 +113,32 @@ html+=`<tr><td>${a.name}</td><td>${fmt(a.opening)}</td><td>${fmt(b[a.id]||0)}</t
 <td><button class="btn ghost" data-editacc="${a.id}">Edit</button></td></tr>`;
 });
 html+='</table></div>';
+html+=footer('dashboard');
+html+='</div>';
+app.innerHTML=html;
+initNav(); initEditAccount(); initTxActions(); initAddTransaction();
+}
 
-html+='<div class="card"><h4>Transactions</h4>';
+// Accounts Page
+function viewAccounts(){
+const b=balances();
+let html='<div class="app"><div class="card">'+header()+'</div>';
+html+='<div class="card"><h3>Accounts</h3><table class="table"><tr><th>Name</th><th>Opening</th><th>Balance</th><th></th></tr>';
+state.accounts.forEach(a=>{
+html+=`<tr><td>${a.name}</td><td>${fmt(a.opening)}</td><td>${fmt(b[a.id]||0)}</td>
+<td><button class="btn ghost" data-editacc="${a.id}">Edit</button></td></tr>`;
+});
+html+='</table>';
+html+='<div style="margin-top:12px;"><button class="btn" id="newAccBtn">Create New Account</button></div>';
+html+=footer('accounts')+'</div>';
+app.innerHTML=html;
+initNav(); initEditAccount(); initNewAccount();
+}
+
+// Transactions Page
+function viewTransactions(){
+let html='<div class="app"><div class="card">'+header()+'</div>';
+html+='<div class="card"><h3>Transactions</h3>';
 if(state.transactions.length===0) html+='<div class="small">No transactions yet</div>';
 else{
 html+='<div class="list">';
@@ -121,18 +153,33 @@ html+=`<div class="tx-item"><div class="tx-left"><div style="font-weight:700">${
 });
 html+='</div>';
 }
-
 html+='<div style="margin-top:12px;"><button class="btn" id="addTxBtn">Add Transaction</button></div>';
-html+=footer('dashboard');
-html+='</div>';
+html+=footer('transactions')+'</div>';
 app.innerHTML=html;
-initNav();
-initEditAccount();
-initTxActions();
-initAddTransaction();
+initNav(); initTxActions(); initAddTransaction();
 }
 
-// ------------- Edit Accounts -------------
+// Ledger Page
+function viewLedger(){
+const b=balances();
+let html='<div class="app"><div class="card">'+header()+'</div>';
+html+='<div class="card"><h3>Ledger</h3>';
+state.accounts.forEach(a=>{
+html+=`<h4>${a.name}</h4><table class="table"><tr><th>Date</th><th>Description</th><th>Debit</th><th>Credit</th><th>Note</th></tr>`;
+state.transactions.filter(t=>t.to===a.id || t.from===a.id).forEach(t=>{
+html+=`<tr><td>${t.date.split('T')[0]}</td><td>${t.desc}</td>
+<td>${t.from===a.id?fmt(t.amount):''}</td>
+<td>${t.to===a.id?fmt(t.amount):''}</td>
+<td>${t.note||''}</td></tr>`;
+});
+html+='</table>';
+});
+html+=footer('ledger')+'</div>';
+app.innerHTML=html;
+initNav();
+}
+
+// ----------------- Edit Accounts -----------------
 function initEditAccount(){
 document.querySelectorAll('[data-editacc]').forEach(btn=>{
 btn.onclick=()=>{
@@ -144,7 +191,19 @@ if(val!==null){acc.opening=Number(val); save(state); render();}
 });
 }
 
-// ------------- Transaction Edit/Delete -------------
+function initNewAccount(){
+const btn=document.getElementById('newAccBtn');
+if(!btn) return;
+btn.onclick=()=>{
+const name=prompt('New Account Name','');
+if(!name) return;
+const opening=Number(prompt('Opening balance','0')||0);
+state.accounts.push({id:uid(),name,opening});
+save(state); render();
+}
+}
+
+// ----------------- Transactions -----------------
 function initTxActions(){
 document.querySelectorAll('[data-deltx]').forEach(btn=>{
 btn.onclick=()=>{
@@ -152,7 +211,6 @@ const id=btn.getAttribute('data-deltx');
 if(confirm('Delete this transaction?')){state.transactions=state.transactions.filter(t=>t.id!==id); save(state); render();}
 };
 });
-
 document.querySelectorAll('[data-edittx]').forEach(btn=>{
 btn.onclick=()=>{
 const id=btn.getAttribute('data-edittx');
@@ -163,7 +221,6 @@ if(val!==null){tx.amount=Number(val); save(state); render();}
 });
 }
 
-// ------------- Add Transaction -------------
 function initAddTransaction(){
 const btn=document.getElementById('addTxBtn');
 if(!btn) return;
@@ -187,9 +244,9 @@ const page=location.hash.replace('#','');
 if(!page) return viewLogin();
 switch(page){
 case 'dashboard': viewDashboard(); break;
-case 'accounts': viewDashboard(); break;
-case 'transactions': viewDashboard(); break;
-case 'ledger': viewDashboard(); break;
+case 'accounts': viewAccounts(); break;
+case 'transactions': viewTransactions(); break;
+case 'ledger': viewLedger(); break;
 default: viewDashboard(); break;
 }
 }
